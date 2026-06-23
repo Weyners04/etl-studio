@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://etl-studio/ir.schema.json",
+  "title": "ETL Studio IR",
+  "description": "Représentation intermédiaire d'un job ETL : graphe orienté acyclique de noeuds et d'aretes. Contrat universel entre l'editeur visuel, la couche IA et le moteur d'execution.",
+  "type": "object",
+  "required": ["version", "id", "name", "nodes", "edges"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Version du format d'IR (semver).",
+      "default": "0.1.0"
+    },
+    "id": { "type": "string", "description": "Identifiant unique du job." },
+    "name": { "type": "string", "description": "Nom lisible du job." },
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/node" }
+    },
+    "edges": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/edge" }
+    }
+  },
+  "definitions": {
+    "node": {
+      "type": "object",
+      "required": ["id", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "type": {
+          "type": "string",
+          "pattern": "^(source|transform|sink)\\.[a-z0-9_]+$",
+          "description": "Type namespace : categorie.nom (ex. source.csv, transform.filter)."
+        },
+        "params": {
+          "type": "object",
+          "description": "Parametres propres au type de noeud ; valides par le schema du noeud cote backend."
+        },
+        "position": { "$ref": "#/definitions/position" }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": ["id", "source", "target"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "source": { "type": "string", "description": "id du noeud source." },
+        "target": { "type": "string", "description": "id du noeud cible." },
+        "sourcePort": { "type": "string", "default": "out" },
+        "targetPort": { "type": "string", "default": "in" }
+      }
+    },
+    "position": {
+      "type": "object",
+      "description": "Position visuelle ; ignoree a l'execution.",
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    }
+  }
+}

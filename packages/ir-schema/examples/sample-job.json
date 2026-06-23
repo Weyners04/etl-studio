@@ -1,0 +1,36 @@
+{
+  "version": "0.1.0",
+  "id": "job_sample_clients",
+  "name": "Clients majeurs vers Parquet",
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "source.csv",
+      "params": { "path": "data/clients.csv", "has_header": true },
+      "position": { "x": 0, "y": 0 }
+    },
+    {
+      "id": "n2",
+      "type": "transform.filter",
+      "params": { "expr": "age >= 18" },
+      "position": { "x": 280, "y": 0 }
+    },
+    {
+      "id": "n3",
+      "type": "transform.select",
+      "params": { "columns": ["id", "nom", "email", "age"] },
+      "position": { "x": 560, "y": 0 }
+    },
+    {
+      "id": "n4",
+      "type": "sink.parquet",
+      "params": { "path": "out/clients_majeurs.parquet" },
+      "position": { "x": 840, "y": 0 }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "n1", "target": "n2" },
+    { "id": "e2", "source": "n2", "target": "n3" },
+    { "id": "e3", "source": "n3", "target": "n4" }
+  ]
+}
