@@ -3,6 +3,7 @@
 Ajouter une capacité = enregistrer un type ici (généralement via le décorateur @register).
 La validation et l'exécution interrogent toutes deux ce registre.
 """
+
 from __future__ import annotations
 
 from typing import Callable

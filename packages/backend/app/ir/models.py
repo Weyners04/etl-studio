@@ -6,6 +6,7 @@ Ces modèles Pydantic ont un double rôle :
 
 C'est la traduction Python du contrat défini dans packages/ir-schema/schema/ir.schema.json.
 """
+
 from __future__ import annotations
 
 from typing import Any

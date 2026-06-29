@@ -4,6 +4,7 @@ Principe : le LLM n'émet jamais de code. Il est forcé, via structured output /
 calling, à produire un objet conforme au schéma IRGraph. La sortie est ensuite validée ;
 si elle est invalide, on renvoie l'erreur au modèle pour réparation (boucle V2).
 """
+
 from __future__ import annotations
 
 from app.ir import IRGraph

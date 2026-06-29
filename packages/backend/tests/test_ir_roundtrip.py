@@ -1,4 +1,5 @@
 """Tests Phase 0 : l'exemple de référence se parse, valide et planifie."""
+
 from __future__ import annotations
 
 import json
@@ -9,11 +10,7 @@ from app.interpreter import build_plan, validate
 import app.nodes  # noqa: F401  (enregistre les nœuds)
 
 SAMPLE = (
-    Path(__file__).resolve().parents[3]
-    / "packages"
-    / "ir-schema"
-    / "examples"
-    / "sample-job.json"
+    Path(__file__).resolve().parents[3] / "packages" / "ir-schema" / "examples" / "sample-job.json"
 )
 
 

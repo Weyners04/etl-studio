@@ -3,6 +3,7 @@
 Parcourt les étapes dans l'ordre ; chaque nœud reçoit les frames de ses entrées et produit
 sa sortie. Les implémentations s'appuient sur Polars / DuckDB (voir app/nodes).
 """
+
 from __future__ import annotations
 
 from typing import Any

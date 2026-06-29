@@ -1,4 +1,5 @@
 """transform.select — projette un sous-ensemble de colonnes."""
+
 from __future__ import annotations
 
 from typing import Any

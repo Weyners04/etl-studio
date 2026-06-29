@@ -2,6 +2,7 @@
 
 TODO (Phase 1) : parser params['expr'] vers une expression Polars sûre (pas d'eval libre).
 """
+
 from __future__ import annotations
 
 from typing import Any

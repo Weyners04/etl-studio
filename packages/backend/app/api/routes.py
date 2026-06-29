@@ -1,4 +1,5 @@
 """Routes FastAPI : surface unique sur le pipeline validate -> interpret -> execute + IA."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException

@@ -7,6 +7,7 @@ Vérifie, au-delà du parsing Pydantic :
   - (TODO) les params respectent le schéma du type de nœud ;
   - (TODO) la cardinalité des ports est respectée.
 """
+
 from __future__ import annotations
 
 from app.ir import IRGraph

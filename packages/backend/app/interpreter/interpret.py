@@ -3,6 +3,7 @@
 Produit un tri topologique des nœuds. Aucune génération de code : on construit l'ordre
 dans lequel les implémentations de nœuds seront appelées.
 """
+
 from __future__ import annotations
 
 from collections import deque

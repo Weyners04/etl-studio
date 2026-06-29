@@ -2,6 +2,7 @@
 
 TODO (Phase 1) : brancher réellement sur Polars une fois les chemins/IO arrêtés.
 """
+
 from __future__ import annotations
 
 from typing import Any
