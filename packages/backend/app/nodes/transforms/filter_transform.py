@@ -1,11 +1,12 @@
-"""transform.filter — garde les lignes satisfaisant une expression.
+"""transform.filter — garde les lignes satisfaisant une condition simple.
 
-TODO (Phase 1) : parser params['expr'] vers une expression Polars sûre (pas d'eval libre).
+La condition est structurée (column / operator / value) : aucun eval, jamais.
+Phase 1 scope : une colonne, un opérateur binaire, une valeur scalaire.
 """
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -14,7 +15,9 @@ from app.nodes.registry import register
 
 
 class FilterTransformParams(BaseModel):
-    expr: str
+    column: str
+    operator: Literal["==", "!=", ">", ">=", "<", "<="]
+    value: int | float | str | bool
 
 
 @register(
@@ -24,7 +27,4 @@ class FilterTransformParams(BaseModel):
 )
 class FilterTransform:
     def run(self, params: dict[str, Any], inputs: list[Any]) -> Any:
-        (frame,) = inputs
-        expr = params["expr"]
-        # return frame.filter(parse_expr(expr))
-        raise NotImplementedError(f"transform.filter non encore implémenté (expr={expr}).")
+        raise NotImplementedError("transform.filter non encore implémenté.")

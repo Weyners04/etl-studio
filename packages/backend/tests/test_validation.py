@@ -94,7 +94,13 @@ def test_sink_with_outgoing_edge():
     """Un sink qui émet une arête viole sa cardinalité (max_out=0)."""
     raw = load_sample()
     # Ajoute un nœud transform.filter supplémentaire et une arête depuis n4 (sink)
-    raw["nodes"].append({"id": "n5", "type": "transform.filter", "params": {"expr": "age > 0"}})
+    raw["nodes"].append(
+        {
+            "id": "n5",
+            "type": "transform.filter",
+            "params": {"column": "age", "operator": ">", "value": 0},
+        }
+    )
     raw["edges"].append({"id": "e_bad", "source": "n4", "target": "n5"})
     with pytest.raises(ValidationError) as exc_info:
         validate(make_graph(raw))

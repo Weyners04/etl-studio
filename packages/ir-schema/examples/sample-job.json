@@ -12,7 +12,7 @@
     {
       "id": "n2",
       "type": "transform.filter",
-      "params": { "expr": "age >= 18" },
+      "params": { "column": "age", "operator": ">=", "value": 18 },
       "position": { "x": 280, "y": 0 }
     },
     {
