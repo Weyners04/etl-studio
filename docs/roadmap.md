@@ -26,6 +26,9 @@ Progression par phases, avec checkpoints de validation explicites. Coche au fur 
 - [ ] Validation systématique de l'IR générée avant tout rendu/exécution
 - [ ] Endpoint `/ai/generate` + intégration dans l'UI (prompt → graphe affiché)
 - [ ] Boucle de réparation : si l'IR générée est invalide, renvoyer l'erreur au LLM
+  - *Décision reportée :* passer `validate()` d'un mode fail-fast (arrêt à la première erreur)
+    à un mode collecte de toutes les erreurs, pour alimenter cette boucle en renvoyant tous
+    les problèmes d'un coup au LLM.
 - [ ] **Checkpoint :** un prompt produit un job valide, éditable ensuite à la main
 
 ## Phase 3 — V3  *(fonctionnalités avancées)*
