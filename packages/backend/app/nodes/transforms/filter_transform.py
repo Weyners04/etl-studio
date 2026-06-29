@@ -7,10 +7,21 @@ from __future__ import annotations
 
 from typing import Any
 
+from pydantic import BaseModel
+
+from app.nodes.base import PortCardinality
 from app.nodes.registry import register
 
 
-@register("transform.filter")
+class FilterTransformParams(BaseModel):
+    expr: str
+
+
+@register(
+    "transform.filter",
+    params_model=FilterTransformParams,
+    ports=PortCardinality(min_in=1, max_in=None, min_out=0, max_out=None),
+)
 class FilterTransform:
     def run(self, params: dict[str, Any], inputs: list[Any]) -> Any:
         (frame,) = inputs

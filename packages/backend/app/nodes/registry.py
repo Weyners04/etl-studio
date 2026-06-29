@@ -1,6 +1,6 @@
-"""Registre type de nœud -> implémentation.
+"""Registre type de nœud -> descripteur complet (impl + params + cardinalité).
 
-Ajouter une capacité = enregistrer un type ici (généralement via le décorateur @register).
+Ajouter une capacité = enregistrer un type ici via le décorateur @register.
 La validation et l'exécution interrogent toutes deux ce registre.
 """
 
@@ -8,14 +8,25 @@ from __future__ import annotations
 
 from typing import Callable
 
-from app.nodes.base import NodeImpl
+from pydantic import BaseModel
 
-_REGISTRY: dict[str, NodeImpl] = {}
+from app.nodes.base import NodeDescriptor, NodeImpl, PortCardinality
+
+_REGISTRY: dict[str, NodeDescriptor] = {}
 
 
-def register(node_type: str) -> Callable[[type], type]:
+def register(
+    node_type: str,
+    *,
+    params_model: type[BaseModel],
+    ports: PortCardinality,
+) -> Callable[[type], type]:
     def deco(cls: type) -> type:
-        _REGISTRY[node_type] = cls()  # instance unique partagée
+        _REGISTRY[node_type] = NodeDescriptor(
+            impl=cls(),  # instance unique partagée
+            params_model=params_model,
+            ports=ports,
+        )
         return cls
 
     return deco
@@ -26,6 +37,13 @@ def is_registered(node_type: str) -> bool:
 
 
 def get_node_impl(node_type: str) -> NodeImpl:
+    try:
+        return _REGISTRY[node_type].impl
+    except KeyError as exc:
+        raise KeyError(f"Aucune implémentation enregistrée pour '{node_type}'.") from exc
+
+
+def get_node_descriptor(node_type: str) -> NodeDescriptor:
     try:
         return _REGISTRY[node_type]
     except KeyError as exc:

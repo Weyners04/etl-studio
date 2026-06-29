@@ -7,10 +7,22 @@ from __future__ import annotations
 
 from typing import Any
 
+from pydantic import BaseModel
+
+from app.nodes.base import PortCardinality
 from app.nodes.registry import register
 
 
-@register("source.csv")
+class CsvSourceParams(BaseModel):
+    path: str
+    has_header: bool = True
+
+
+@register(
+    "source.csv",
+    params_model=CsvSourceParams,
+    ports=PortCardinality(min_in=0, max_in=0, min_out=0, max_out=None),
+)
 class CsvSource:
     def run(self, params: dict[str, Any], inputs: list[Any]) -> Any:
         path = params["path"]
