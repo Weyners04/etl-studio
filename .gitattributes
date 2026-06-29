@@ -1,0 +1,28 @@
+# Normalise tous les fichiers texte en LF dans le dépôt et au checkout.
+# Prend le dessus sur core.autocrlf (Windows) et core.eol.
+* text=auto eol=lf
+
+# Fichiers de données binaires — pas de normalisation EOL, pas de diff texte
+*.parquet binary
+*.duckdb  binary
+
+# Images
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.svg  binary
+
+# Polices
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.eot   binary
+
+# Archives / artefacts compilés
+*.zip binary
+*.gz  binary
+*.tar binary
+*.pyc binary
