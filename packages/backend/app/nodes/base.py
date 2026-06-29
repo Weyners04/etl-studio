@@ -9,9 +9,13 @@ from pydantic import BaseModel
 
 
 class NodeImpl(Protocol):
-    """Toute implémentation de nœud expose run(params, inputs) -> sortie."""
+    """Toute implémentation de nœud expose run(params, inputs) -> sortie.
 
-    def run(self, params: dict[str, Any], inputs: list[Any]) -> Any: ...
+    params reçoit un objet Pydantic parsé (type concret selon le nœud) —
+    Any ici car chaque implémentation précise son propre modèle.
+    """
+
+    def run(self, params: Any, inputs: list[Any]) -> Any: ...
 
 
 @dataclass(frozen=True)

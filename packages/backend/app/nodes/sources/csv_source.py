@@ -1,12 +1,13 @@
-"""source.csv — lit un CSV en LazyFrame Polars.
+"""source.csv — construit un plan de lecture CSV (LazyFrame Polars).
 
-TODO (Phase 1) : brancher réellement sur Polars une fois les chemins/IO arrêtés.
+L'exécution effective est déclenchée par le sink en aval (lazy evaluation).
 """
 
 from __future__ import annotations
 
 from typing import Any
 
+import polars as pl
 from pydantic import BaseModel
 
 from app.nodes.base import PortCardinality
@@ -24,8 +25,5 @@ class CsvSourceParams(BaseModel):
     ports=PortCardinality(min_in=0, max_in=0, min_out=0, max_out=None),
 )
 class CsvSource:
-    def run(self, params: dict[str, Any], inputs: list[Any]) -> Any:
-        path = params["path"]
-        # import polars as pl
-        # return pl.scan_csv(path, has_header=params.get("has_header", True))
-        raise NotImplementedError(f"source.csv non encore implémenté (path={path}).")
+    def run(self, params: CsvSourceParams, inputs: list[Any]) -> pl.LazyFrame:
+        return pl.scan_csv(params.path, has_header=params.has_header)

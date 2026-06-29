@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import polars as pl
 from pydantic import BaseModel
 
 from app.nodes.base import PortCardinality
@@ -20,8 +21,6 @@ class SelectTransformParams(BaseModel):
     ports=PortCardinality(min_in=1, max_in=None, min_out=0, max_out=None),
 )
 class SelectTransform:
-    def run(self, params: dict[str, Any], inputs: list[Any]) -> Any:
-        (frame,) = inputs
-        columns = params["columns"]
-        # return frame.select(columns)
-        raise NotImplementedError(f"transform.select non encore implémenté (columns={columns}).")
+    def run(self, params: SelectTransformParams, inputs: list[Any]) -> pl.LazyFrame:
+        (lf,) = inputs
+        return lf.select(params.columns)

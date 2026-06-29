@@ -9,20 +9,21 @@ from __future__ import annotations
 from typing import Any
 
 from app.interpreter.interpret import ExecutionPlan
-from app.nodes.registry import get_node_impl
+from app.nodes.registry import get_node_descriptor
 
 
 def execute(plan: ExecutionPlan) -> dict[str, Any]:
     """Exécute le plan et renvoie les sorties par id de nœud.
 
-    Les sources renvoient un frame, les transforms le transforment, les sinks l'écrivent
-    (et renvoient typiquement None / un récapitulatif).
+    Les sources renvoient un LazyFrame, les transforms l'enrichissent, les sinks
+    déclenchent la matérialisation (collect) et renvoient un récapitulatif.
     """
     outputs: dict[str, Any] = {}
 
     for step in plan.steps:
-        impl = get_node_impl(step.node.type)
+        desc = get_node_descriptor(step.node.type)
+        parsed_params = desc.params_model.model_validate(step.node.params)
         inputs = [outputs[src] for src in step.inputs]
-        outputs[step.node.id] = impl.run(params=step.node.params, inputs=inputs)
+        outputs[step.node.id] = desc.impl.run(params=parsed_params, inputs=inputs)
 
     return outputs
