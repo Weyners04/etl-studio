@@ -39,6 +39,6 @@ class FilterTransformParams(BaseModel):
 )
 class FilterTransform:
     def run(self, params: FilterTransformParams, inputs: list[Any]) -> pl.LazyFrame:
-        (lf,) = inputs
+        lf: pl.LazyFrame = inputs[0]
         predicate = _OPS[params.operator](pl.col(params.column), params.value)
         return lf.filter(predicate)

@@ -22,5 +22,5 @@ class SelectTransformParams(BaseModel):
 )
 class SelectTransform:
     def run(self, params: SelectTransformParams, inputs: list[Any]) -> pl.LazyFrame:
-        (lf,) = inputs
+        lf: pl.LazyFrame = inputs[0]
         return lf.select(params.columns)

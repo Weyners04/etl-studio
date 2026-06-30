@@ -10,6 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import polars as pl
 from pydantic import BaseModel
 
 from app.nodes.base import PortCardinality
@@ -27,7 +28,7 @@ class ParquetSinkParams(BaseModel):
 )
 class ParquetSink:
     def run(self, params: ParquetSinkParams, inputs: list[Any]) -> dict[str, Any]:
-        (lf,) = inputs
+        lf: pl.LazyFrame = inputs[0]
         Path(params.path).parent.mkdir(parents=True, exist_ok=True)
         lf.collect().write_parquet(params.path)
         return {"written": params.path}
