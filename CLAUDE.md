@@ -45,7 +45,7 @@ Backend — depuis `packages/backend`, environnement géré par **uv** :
 - Tests : `uv run pytest -q`
 - Lint : `uv run ruff check .`  ·  Format : `uv run ruff format .`
 - Typage : `uv run mypy app`
-- Serveur : `uv run uvicorn app.main:app --reload`
+- Serveur : `uv run uvicorn app.main:api_app --reload`
 
 Frontend — depuis `packages/frontend` :
 - Installer : `npm install`  ·  Dev : `npm run dev`  ·  Lint/typage : `npm run lint`

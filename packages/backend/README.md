@@ -5,7 +5,7 @@
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-uvicorn app.main:app --reload
+uvicorn app.main:api_app --reload
 pytest -q
 ```
 
