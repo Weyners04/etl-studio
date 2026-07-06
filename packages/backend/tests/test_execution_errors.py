@@ -199,3 +199,53 @@ def test_sink_write_error_attributed_to_sink(tmp_path: Path) -> None:
         f"Le sink doit être le coupable ; obtenu node_id={err.node_id!r}, message={str(err)!r}"
     )
     assert err.category == ErrorCategory.RESOURCE
+
+
+# ──────────────────────────────────────────────────────────────
+# Test 6 — deux sources distinctes sur le même fichier manquant :
+#           attribution au PREMIER dans l'ordre topologique, pas au second
+# ──────────────────────────────────────────────────────────────
+
+
+def test_two_duplicate_sources_attributed_to_first_in_topo_order(tmp_path: Path) -> None:
+    """Deux chaînes indépendantes, chacune avec une source vers le même fichier absent.
+
+    Prouve qu'on distingue deux nœuds ayant des params identiques : l'attribution
+    cible précisément 'na' (premier dans la liste → premier en ordre topologique)
+    et non 'nb'. On vérifie l'id du nœud, pas le contenu du message d'erreur.
+    """
+    missing = str(tmp_path / "missing.csv")
+
+    # na est déclaré avant nb → premier dans l'ordre topologique (Kahn sur dict ordonné)
+    graph = _graph(
+        nodes=[
+            {"id": "na", "type": "source.csv", "params": {"path": missing}},
+            {"id": "nb", "type": "source.csv", "params": {"path": missing}},
+            {
+                "id": "sink_a",
+                "type": "sink.parquet",
+                "params": {"path": str(tmp_path / "out_a.parquet")},
+            },
+            {
+                "id": "sink_b",
+                "type": "sink.parquet",
+                "params": {"path": str(tmp_path / "out_b.parquet")},
+            },
+        ],
+        edges=[
+            {"id": "e1", "source": "na", "target": "sink_a"},
+            {"id": "e2", "source": "nb", "target": "sink_b"},
+        ],
+        gid="t_dup",
+    )
+    validate(graph)
+
+    with pytest.raises(ExecutionError) as exc_info:
+        execute(build_plan(graph))
+
+    err = exc_info.value
+    assert err.node_id == "na", (
+        f"Doit être attribué à 'na' (premier en ordre topo), pas à {err.node_id!r}"
+    )
+    assert err.node_id != "nb"
+    assert err.category == ErrorCategory.RESOURCE
