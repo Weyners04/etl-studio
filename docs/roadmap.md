@@ -7,17 +7,20 @@ Progression par phases, avec checkpoints de validation explicites. Coche au fur 
 - [x] Exemple d'IR exécutable de référence
 - [x] Modèles IR côté backend (Pydantic) = validation + base du structured output
 - [x] Types IR côté frontend (TypeScript)
-- [ ] Validation structurelle complète (DAG, refs, types connus, params)
+- [x] Validation structurelle complète : params via modèles Pydantic du registre, cardinalité des ports, DAG, références d'arêtes.
 - [ ] Squelette FastAPI (`/jobs/validate`, `/jobs/run`)
 - [ ] Tests sur l'exemple de référence (round-trip parse/valide)
+- [x] CI : ruff lint, ruff format, pytest, mypy — 15 tests.
 
 ## Phase 1 — V1  *(éditeur visuel + autorat manuel de l'IR)*
 - [ ] Canvas React Flow : ajout/suppression/déplacement de nœuds et arêtes
 - [ ] Panneau de paramètres par type de nœud (formulaires pilotés par le schéma)
 - [ ] Sérialisation canvas → IR et IR → canvas (le contrat dans les deux sens)
-- [ ] Registre de nœuds backend : sources/transforms/sinks de base
-- [ ] Interpréteur : tri topologique → plan d'exécution
-- [ ] Exécution : nœuds branchés sur Polars/DuckDB
+- [x] Registre de nœuds backend : sources/transforms/sinks de base
+- [x] Interpréteur : tri topologique → plan d'exécution
+- [x] Exécution : sources (scan_csv), transforms (filter structuré column/operator/value, select), sink (collect + write_parquet) — pas de texte libre.
+- [x] Gestion des erreurs d'exécution : ExecutionError (catégorie RESOURCE/DATA, attribution au nœud précis via rejeu diagnostic — sonde collect_schema par nœud, sonde d'écriture pour les sinks).
+  - *Limite connue :* la sonde sink appelle `mkdir` réellement (léger effet de bord) ; à reconcevoir pour les sinks distants (bases, cloud) où « sonder l'écriture » devient une vraie question.
 - [ ] Bouton « Run » de bout en bout sur un job construit à la main
 - [ ] **Checkpoint :** un job non trivial s'édite visuellement puis s'exécute
 
