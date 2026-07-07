@@ -44,7 +44,7 @@ export function fromIR(graph: IRGraph): { nodes: RFNode<EtlNodeData>[]; edges: R
     nodes: graph.nodes.map(
       (n): RFNode<EtlNodeData> => ({
         id: n.id,
-        type: "default",
+        type: "etlNode",
         position: n.position ?? { x: 0, y: 0 },
         data: { nodeType: n.type, params: n.params },
       }),

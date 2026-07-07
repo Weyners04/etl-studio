@@ -13,6 +13,9 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import { toIR, type EtlNodeData } from "@/ir/serialize";
 import { validateJob } from "@/api/client";
+import EtlNode from "@/editor/nodes/EtlNode";
+
+const nodeTypes = { etlNode: EtlNode };
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState<T>(value);
@@ -28,13 +31,13 @@ const JOB_META = { id: "job-1", name: "Exemple" };
 const INITIAL_NODES: RFNode<EtlNodeData>[] = [
   {
     id: "n1",
-    type: "default",
+    type: "etlNode",
     position: { x: 100, y: 200 },
     data: { nodeType: "source.csv", params: { path: "data/input.csv" } },
   },
   {
     id: "n2",
-    type: "default",
+    type: "etlNode",
     position: { x: 380, y: 200 },
     data: {
       nodeType: "transform.filter",
@@ -43,7 +46,7 @@ const INITIAL_NODES: RFNode<EtlNodeData>[] = [
   },
   {
     id: "n3",
-    type: "default",
+    type: "etlNode",
     position: { x: 660, y: 200 },
     data: { nodeType: "sink.parquet", params: { path: "data/output.parquet" } },
   },
@@ -112,6 +115,7 @@ export default function FlowEditor() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        nodeTypes={nodeTypes}
         fitView
       >
         <Background />
