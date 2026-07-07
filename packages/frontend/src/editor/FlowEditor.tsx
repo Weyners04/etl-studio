@@ -14,9 +14,10 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { toIR, type EtlNodeData } from "@/ir/serialize";
-import { validateJob } from "@/api/client";
+import { validateJob, listNodeTypes } from "@/api/client";
 import EtlNode from "@/editor/nodes/EtlNode";
 import NodePalette from "@/editor/NodePalette";
+import NodeParamsPanel from "@/editor/NodeParamsPanel";
 
 const nodeTypes = { etlNode: EtlNode };
 
@@ -65,6 +66,15 @@ export default function FlowEditor() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
   const { screenToFlowPosition } = useReactFlow();
 
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+  // Même clé que NodePalette → TanStack retourne le cache immédiatement.
+  const { data: nodeTypeInfos } = useQuery({
+    queryKey: ["nodeTypes"],
+    queryFn: listNodeTypes,
+    staleTime: Infinity,
+  });
+
   const onConnect = useCallback(
     (c: Connection) => setEdges((eds) => addEdge(c, eds)),
     [setEdges],
@@ -92,6 +102,31 @@ export default function FlowEditor() {
     [screenToFlowPosition, setNodes],
   );
 
+  const onNodeClick = useCallback(
+    (_event: React.MouseEvent, node: RFNode<EtlNodeData>) => {
+      setSelectedNodeId(node.id);
+    },
+    [],
+  );
+
+  const onPaneClick = useCallback((_event: React.MouseEvent) => {
+    setSelectedNodeId(null);
+  }, []);
+
+  const onParamChange = useCallback(
+    (key: string, value: unknown) => {
+      if (!selectedNodeId) return;
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === selectedNodeId
+            ? { ...n, data: { ...n.data, params: { ...n.data.params, [key]: value } } }
+            : n,
+        ),
+      );
+    },
+    [selectedNodeId, setNodes],
+  );
+
   const ir = useMemo(() => toIR(JOB_META, nodes, edges), [nodes, edges]);
   const debouncedIr = useDebounce(ir, 300);
 
@@ -113,6 +148,14 @@ export default function FlowEditor() {
       ),
     [nodes, errorNodeId],
   );
+
+  const selectedNode = selectedNodeId
+    ? (nodes.find((n) => n.id === selectedNodeId) ?? null)
+    : null;
+
+  const selectedNodeTypeInfo = selectedNode
+    ? (nodeTypeInfos?.find((info) => info.type === selectedNode.data.nodeType) ?? null)
+    : null;
 
   let statusText: string;
   let statusColor: string;
@@ -147,6 +190,8 @@ export default function FlowEditor() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onNodeClick={onNodeClick}
+          onPaneClick={onPaneClick}
           nodeTypes={nodeTypes}
           fitView
         >
@@ -175,6 +220,15 @@ export default function FlowEditor() {
           {statusText}
         </div>
       </div>
+      {selectedNode && (
+        <NodeParamsPanel
+          nodeId={selectedNode.id}
+          nodeType={selectedNode.data.nodeType}
+          params={selectedNode.data.params}
+          schema={selectedNodeTypeInfo?.paramsSchema ?? {}}
+          onParamChange={onParamChange}
+        />
+      )}
     </div>
   );
 }
