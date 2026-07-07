@@ -7,10 +7,24 @@ export type ValidationResult =
   | { kind: "ok" }
   | { kind: "validation_error"; message: string; nodeId: string | null; nodeType: string | null };
 
-export async function listNodeTypes(): Promise<string[]> {
+export interface NodeTypeInfo {
+  type: string;
+  category: string;
+  paramsSchema: Record<string, unknown>;
+}
+
+export async function listNodeTypes(): Promise<NodeTypeInfo[]> {
   const res = await fetch(`${BASE}/nodes`);
-  const data = (await res.json()) as { types: string[] };
-  return data.types;
+  const raw = (await res.json()) as {
+    type: string;
+    category: string;
+    params_schema: Record<string, unknown>;
+  }[];
+  return raw.map((n) => ({
+    type: n.type,
+    category: n.category,
+    paramsSchema: n.params_schema,
+  }));
 }
 
 export async function validateJob(graph: IRGraph): Promise<ValidationResult> {

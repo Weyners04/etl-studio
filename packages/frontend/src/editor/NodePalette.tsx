@@ -73,8 +73,8 @@ export default function NodePalette() {
       {isError && (
         <div style={{ fontSize: 12, color: "#ef4444" }}>Erreur</div>
       )}
-      {nodeTypes?.map((nt) => (
-        <PaletteItem key={nt} nodeType={nt} />
+      {nodeTypes?.map((info) => (
+        <PaletteItem key={info.type} nodeType={info.type} />
       ))}
     </div>
   );
