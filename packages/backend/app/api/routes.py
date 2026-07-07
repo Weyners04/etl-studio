@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.ai import generate_ir
 from app.ir import IRGraph
 from app.interpreter import ValidationError, build_plan, execute, validate
-from app.nodes.registry import registered_types
+from app.nodes.registry import get_node_descriptor, registered_types
 
 router = APIRouter()
 
@@ -17,10 +19,23 @@ class GeneratePayload(BaseModel):
     prompt: str
 
 
+class NodeInfo(BaseModel):
+    type: str
+    category: str
+    params_schema: dict[str, Any]
+
+
 @router.get("/nodes")
-def list_nodes() -> dict[str, list[str]]:
-    """Types de nœuds connus (pour peupler la palette de l'éditeur)."""
-    return {"types": registered_types()}
+def list_nodes() -> list[NodeInfo]:
+    """Types de nœuds connus avec leur catégorie et le schéma JSON de leurs params."""
+    return [
+        NodeInfo(
+            type=node_type,
+            category=node_type.split(".")[0],
+            params_schema=get_node_descriptor(node_type).params_model.model_json_schema(),
+        )
+        for node_type in registered_types()
+    ]
 
 
 @router.post("/jobs/validate")
