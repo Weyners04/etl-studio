@@ -1,3 +1,4 @@
+import type React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import ReactFlow, {
@@ -6,6 +7,7 @@ import ReactFlow, {
   addEdge,
   useEdgesState,
   useNodesState,
+  useReactFlow,
   type Connection,
   type Edge as RFEdge,
   type Node as RFNode,
@@ -14,6 +16,7 @@ import "reactflow/dist/style.css";
 import { toIR, type EtlNodeData } from "@/ir/serialize";
 import { validateJob } from "@/api/client";
 import EtlNode from "@/editor/nodes/EtlNode";
+import NodePalette from "@/editor/NodePalette";
 
 const nodeTypes = { etlNode: EtlNode };
 
@@ -58,12 +61,35 @@ const INITIAL_EDGES: RFEdge[] = [
 ];
 
 export default function FlowEditor() {
-  const [nodes, , onNodesChange] = useNodesState<EtlNodeData>(INITIAL_NODES);
+  const [nodes, setNodes, onNodesChange] = useNodesState<EtlNodeData>(INITIAL_NODES);
   const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
+  const { screenToFlowPosition } = useReactFlow();
 
   const onConnect = useCallback(
     (c: Connection) => setEdges((eds) => addEdge(c, eds)),
     [setEdges],
+  );
+
+  const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  }, []);
+
+  const onDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      const nodeType = event.dataTransfer.getData("application/etl-node-type");
+      if (!nodeType) return;
+      const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+      const newNode: RFNode<EtlNodeData> = {
+        id: crypto.randomUUID(),
+        type: "etlNode",
+        position,
+        data: { nodeType, params: {} },
+      };
+      setNodes((nds) => [...nds, newNode]);
+    },
+    [screenToFlowPosition, setNodes],
   );
 
   const ir = useMemo(() => toIR(JOB_META, nodes, edges), [nodes, edges]);
@@ -108,39 +134,46 @@ export default function FlowEditor() {
   }
 
   return (
-    <div style={{ width: "100%", height: "100vh", position: "relative" }}>
-      <ReactFlow
-        nodes={displayNodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        nodeTypes={nodeTypes}
-        fitView
-      >
-        <Background />
-        <Controls />
-      </ReactFlow>
+    <div style={{ width: "100%", height: "100vh", display: "flex" }}>
+      <NodePalette />
       <div
-        style={{
-          position: "absolute",
-          bottom: 12,
-          left: "50%",
-          transform: "translateX(-50%)",
-          background: statusColor,
-          border: "1px solid #ccc",
-          borderRadius: 6,
-          padding: "6px 14px",
-          fontSize: 13,
-          maxWidth: 480,
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          zIndex: 10,
-          pointerEvents: "none",
-        }}
+        style={{ flex: 1, position: "relative" }}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
       >
-        {statusText}
+        <ReactFlow
+          nodes={displayNodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          nodeTypes={nodeTypes}
+          fitView
+        >
+          <Background />
+          <Controls />
+        </ReactFlow>
+        <div
+          style={{
+            position: "absolute",
+            bottom: 12,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: statusColor,
+            border: "1px solid #ccc",
+            borderRadius: 6,
+            padding: "6px 14px",
+            fontSize: 13,
+            maxWidth: 480,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            zIndex: 10,
+            pointerEvents: "none",
+          }}
+        >
+          {statusText}
+        </div>
       </div>
     </div>
   );

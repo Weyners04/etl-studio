@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactFlowProvider } from "reactflow";
 import FlowEditor from "@/editor/FlowEditor";
 
 const queryClient = new QueryClient({
@@ -10,7 +11,9 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <FlowEditor />
+      <ReactFlowProvider>
+        <FlowEditor />
+      </ReactFlowProvider>
     </QueryClientProvider>
   );
 }
