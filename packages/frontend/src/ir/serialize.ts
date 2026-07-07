@@ -3,16 +3,58 @@
  *
  * toIR    : état du canvas (nodes/edges React Flow) -> IRGraph
  * fromIR  : IRGraph -> état du canvas
- *
- * TODO (Phase 1) : implémenter la correspondance complète des champs / params.
  */
 import type { Edge as RFEdge, Node as RFNode } from "reactflow";
-import type { IRGraph } from "./types";
+import type { IREdge, IRGraph, IRNode, NodeType } from "./types";
 
-export function toIR(_meta: { id: string; name: string }, _nodes: RFNode[], _edges: RFEdge[]): IRGraph {
-  throw new Error("toIR : à implémenter en Phase 1.");
+export interface EtlNodeData {
+  nodeType: string;
+  params: Record<string, unknown>;
 }
 
-export function fromIR(_graph: IRGraph): { nodes: RFNode[]; edges: RFEdge[] } {
-  throw new Error("fromIR : à implémenter en Phase 1.");
+export function toIR(
+  meta: { id: string; name: string },
+  nodes: RFNode<EtlNodeData>[],
+  edges: RFEdge[],
+): IRGraph {
+  return {
+    version: "0.1.0",
+    id: meta.id,
+    name: meta.name,
+    nodes: nodes.map(
+      (n): IRNode => ({
+        id: n.id,
+        type: n.data.nodeType as NodeType,
+        params: n.data.params,
+        position: n.position,
+      }),
+    ),
+    edges: edges.map(
+      (e): IREdge => ({
+        id: e.id,
+        source: e.source,
+        target: e.target,
+      }),
+    ),
+  };
+}
+
+export function fromIR(graph: IRGraph): { nodes: RFNode<EtlNodeData>[]; edges: RFEdge[] } {
+  return {
+    nodes: graph.nodes.map(
+      (n): RFNode<EtlNodeData> => ({
+        id: n.id,
+        type: "default",
+        position: n.position ?? { x: 0, y: 0 },
+        data: { nodeType: n.type, params: n.params },
+      }),
+    ),
+    edges: graph.edges.map(
+      (e): RFEdge => ({
+        id: e.id,
+        source: e.source,
+        target: e.target,
+      }),
+    ),
+  };
 }
