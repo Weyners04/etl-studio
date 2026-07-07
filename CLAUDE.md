@@ -9,6 +9,16 @@ Outil ETL combinant un éditeur de flux visuel (React Flow) et une génération 
 par IA, où une **représentation intermédiaire (IR) JSON** sert de contrat unique entre
 l'autorat (édition) et l'exécution.
 
+## Finalité visée
+
+Application de bureau autonome : frontend empaqueté dans une fenêtre native (Tauri ou
+Electron), backend Python démarré automatiquement via un runtime embarqué (ex. PyInstaller)
+— l'utilisateur final n'installe ni Python ni ne lance de serveur à la main.
+
+**Conséquence dès maintenant :** ne jamais coder en dur des chemins absolus propres à une
+machine ; préférer les variables d'environnement aux valeurs figées ; le backend doit
+démarrer proprement sans intervention manuelle.
+
 ## Principes d'architecture — NON NÉGOCIABLES
 
 Ces décisions sont structurantes. Tout changement qui les contredit doit être **refusé ou

@@ -41,6 +41,14 @@ Progression par phases, avec checkpoints de validation explicites. Coche au fur 
 - [ ] Versioning / diff de jobs
 - [ ] Édition assistée par IA d'un job existant (patch d'IR plutôt que régénération)
 
+## Exploration future — Distribution
+
+- *Décision reportée :* **application de bureau.** Empaqueter le frontend dans une
+  fenêtre native (Tauri ou Electron) et livrer le backend Python démarré automatiquement
+  et en silence, avec un runtime embarqué (ex. PyInstaller) — l'utilisateur final
+  n'installe ni Python ni ne lance de serveur à la main. Chantier de **distribution**,
+  à traiter quand l'outil est fonctionnel, pas avant.
+
 ---
 
 ### Principe transverse
