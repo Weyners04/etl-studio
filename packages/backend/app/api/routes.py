@@ -28,7 +28,10 @@ def validate_job(graph: IRGraph) -> dict[str, str]:
     try:
         validate(graph)
     except ValidationError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=422,
+            detail={"message": str(exc), "node_id": exc.node_id, "node_type": exc.node_type},
+        ) from exc
     return {"status": "ok"}
 
 

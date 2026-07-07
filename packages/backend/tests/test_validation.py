@@ -55,6 +55,8 @@ def test_missing_required_param():
     assert "n1" in msg
     assert "source.csv" in msg
     assert "path" in msg
+    assert exc_info.value.node_id == "n1"
+    assert exc_info.value.node_type == "source.csv"
 
 
 def test_wrong_type_param():
@@ -68,6 +70,8 @@ def test_wrong_type_param():
     assert "n3" in msg
     assert "transform.select" in msg
     assert "columns" in msg
+    assert exc_info.value.node_id == "n3"
+    assert exc_info.value.node_type == "transform.select"
 
 
 # ---------------------------------------------------------------------------
@@ -88,6 +92,8 @@ def test_source_with_incoming_edge():
     assert "n1" in msg
     assert "source.csv" in msg
     assert "entrante" in msg
+    assert exc_info.value.node_id == "n1"
+    assert exc_info.value.node_type == "source.csv"
 
 
 def test_sink_with_outgoing_edge():
@@ -108,3 +114,5 @@ def test_sink_with_outgoing_edge():
     assert "n4" in msg
     assert "sink.parquet" in msg
     assert "sortante" in msg
+    assert exc_info.value.node_id == "n4"
+    assert exc_info.value.node_type == "sink.parquet"

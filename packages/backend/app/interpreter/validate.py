@@ -19,7 +19,23 @@ from app.nodes.registry import get_node_descriptor, is_registered
 
 
 class ValidationError(Exception):
-    """Levée quand l'IR est structurellement invalide."""
+    """Levée quand l'IR est structurellement invalide.
+
+    Attributes:
+        node_id: id du nœud responsable ; None pour les erreurs globales (cycle, arête inconnue).
+        node_type: type du nœud responsable ; None quand node_id est None ou type inconnu.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        node_id: str | None = None,
+        node_type: str | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.node_id = node_id
+        self.node_type = node_type
 
 
 def validate(graph: IRGraph) -> None:
@@ -33,7 +49,11 @@ def validate(graph: IRGraph) -> None:
 
     for node in graph.nodes:
         if not is_registered(node.type):
-            raise ValidationError(f"Nœud {node.id} : type inconnu '{node.type}'.")
+            raise ValidationError(
+                f"Nœud {node.id} : type inconnu '{node.type}'.",
+                node_id=node.id,
+                node_type=node.type,
+            )
 
     _assert_acyclic(graph)
 
@@ -50,7 +70,9 @@ def validate(graph: IRGraph) -> None:
                 f"'{'.'.join(str(loc) for loc in e['loc'])}' : {e['msg']}" for e in exc.errors()
             )
             raise ValidationError(
-                f"Nœud {node.id!r} ({node.type}) : params invalides — {details}."
+                f"Nœud {node.id!r} ({node.type}) : params invalides — {details}.",
+                node_id=node.id,
+                node_type=node.type,
             ) from exc
 
         p = desc.ports
@@ -60,14 +82,18 @@ def validate(graph: IRGraph) -> None:
         if n_in < p.min_in or (p.max_in is not None and n_in > p.max_in):
             expected = f"min {p.min_in}" if p.max_in is None else f"{p.min_in}..{p.max_in}"
             raise ValidationError(
-                f"Nœud {node.id!r} ({node.type}) : {n_in} arête(s) entrante(s), attendu {expected}."
+                f"Nœud {node.id!r} ({node.type}) : {n_in} arête(s) entrante(s), attendu {expected}.",
+                node_id=node.id,
+                node_type=node.type,
             )
 
         if n_out < p.min_out or (p.max_out is not None and n_out > p.max_out):
             expected = f"min {p.min_out}" if p.max_out is None else f"{p.min_out}..{p.max_out}"
             raise ValidationError(
                 f"Nœud {node.id!r} ({node.type}) : {n_out} arête(s) sortante(s),"
-                f" attendu {expected}."
+                f" attendu {expected}.",
+                node_id=node.id,
+                node_type=node.type,
             )
 
 
