@@ -37,12 +37,13 @@ Progression par phases, avec checkpoints de validation explicites. Coche au fur 
 ## Phase 3 — V3  *(fonctionnalités avancées)*
 - [ ] Génération de code (preview Polars lisible) — transparence, pas exécution
 - [ ] Nœuds avancés (join multi-clés, fenêtres, pivots, SQL DuckDB libre)
-- [ ] Mode Debug : paramètre optionnel sur `/jobs/run` (`"debug": true`) renvoyant, en plus des sorties sinks, le schéma et le nombre de lignes à la sortie de chaque nœud intermédiaire — facilite le diagnostic sans avoir à inspecter le Parquet final.
 - [ ] Aperçu de données par nœud (échantillon en sortie de chaque étape)
 - [ ] Versioning / diff de jobs
 - [ ] Édition assistée par IA d'un job existant (patch d'IR plutôt que régénération)
 
-## Exploration future — Distribution
+## Exploration future — Chantiers majeurs
+
+- *Décision reportée :* **Mode debug / visualisation d'exécution en temps réel** : voir quel nœud travaille pendant l'exécution, et le nombre de lignes traversant chaque lien (façon Talend). Tension d'architecture à résoudre : l'exécution normale est Polars lazy (fusionnée, non observable étape par étape) ; un mode debug demanderait une exécution séquentielle instrumentée, distincte du mode run optimisé, plus un canal de progression backend→frontend. Chantier majeur à concevoir à part (proche du futur aperçu de données).
 
 - *Décision reportée :* **application de bureau.** Empaqueter le frontend dans une
   fenêtre native (Tauri ou Electron) et livrer le backend Python démarré automatiquement
