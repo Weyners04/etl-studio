@@ -37,6 +37,7 @@ Progression par phases, avec checkpoints de validation explicites. Coche au fur 
 ## Phase 3 — V3  *(fonctionnalités avancées)*
 - [ ] Génération de code (preview Polars lisible) — transparence, pas exécution
 - [ ] Nœuds avancés (join multi-clés, fenêtres, pivots, SQL DuckDB libre)
+- [ ] Mode Debug : paramètre optionnel sur `/jobs/run` (`"debug": true`) renvoyant, en plus des sorties sinks, le schéma et le nombre de lignes à la sortie de chaque nœud intermédiaire — facilite le diagnostic sans avoir à inspecter le Parquet final.
 - [ ] Aperçu de données par nœud (échantillon en sortie de chaque étape)
 - [ ] Versioning / diff de jobs
 - [ ] Édition assistée par IA d'un job existant (patch d'IR plutôt que régénération)
