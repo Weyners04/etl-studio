@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from app.ai import generate_ir
 from app.ir import IRGraph
-from app.interpreter import ValidationError, build_plan, execute, validate
+from app.interpreter import ExecutionError, ValidationError, build_plan, execute, validate
 from app.nodes.registry import get_node_descriptor, registered_types
 
 router = APIRouter()
@@ -55,10 +55,35 @@ def run_job(graph: IRGraph) -> dict[str, object]:
     try:
         validate(graph)
     except ValidationError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error_type": "validation_error",
+                "message": str(exc),
+                "node_id": exc.node_id,
+                "node_type": exc.node_type,
+            },
+        ) from exc
     plan = build_plan(graph)
-    outputs = execute(plan)  # NotImplementedError tant que les nœuds ne sont pas branchés
-    return {"status": "ok", "node_count": len(outputs)}
+    try:
+        outputs = execute(plan)
+    except ExecutionError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error_type": "execution_error",
+                "message": str(exc),
+                "node_id": exc.node_id,
+                "node_type": exc.node_type,
+                "category": exc.category.value,
+            },
+        ) from exc
+    sink_outputs = [
+        {"node_id": node_id, **value}
+        for node_id, value in outputs.items()
+        if isinstance(value, dict)
+    ]
+    return {"status": "ok", "outputs": sink_outputs}
 
 
 @router.post("/ai/generate")
