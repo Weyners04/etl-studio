@@ -90,7 +90,7 @@ export default function FlowEditor() {
   const mutation = useMutation({
     mutationFn: runJob,
     onMutate: () => {
-      setLogEntries((prev) => [...prev, formatRunStart(JOB_META.name, timestamp())]);
+      setLogEntries([formatRunStart(JOB_META.name, timestamp())]);
       setExecErrorNodeId(null);
     },
     onSuccess: (result) => {
@@ -163,7 +163,9 @@ export default function FlowEditor() {
   const displayNodes: RFNode<EtlNodeData>[] = useMemo(
     () =>
       nodes.map((n): RFNode<EtlNodeData> => {
-        const isError = n.id === validationErrorNodeId || n.id === execErrorNodeId;
+        const isError =
+          (validationErrorNodeId !== null && n.id === validationErrorNodeId) ||
+          (execErrorNodeId !== null && n.id === execErrorNodeId);
         return isError
           ? { ...n, style: { ...n.style, border: "2px solid red", borderRadius: 6 } }
           : n;
