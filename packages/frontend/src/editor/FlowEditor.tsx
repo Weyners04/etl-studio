@@ -1,6 +1,6 @@
 import type React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import ReactFlow, {
   Background,
   Controls,
@@ -14,10 +14,12 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { toIR, type EtlNodeData } from "@/ir/serialize";
-import { validateJob, listNodeTypes } from "@/api/client";
+import { runJob, validateJob, listNodeTypes } from "@/api/client";
 import EtlNode from "@/editor/nodes/EtlNode";
 import NodePalette from "@/editor/NodePalette";
 import NodeParamsPanel from "@/editor/NodeParamsPanel";
+import RunConsole from "@/editor/RunConsole";
+import { formatRunResult, formatRunStart, timestamp } from "@/editor/runLog";
 
 const nodeTypes = { etlNode: EtlNode };
 
@@ -67,12 +69,40 @@ export default function FlowEditor() {
   const { screenToFlowPosition } = useReactFlow();
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [logEntries, setLogEntries] = useState<string[]>([]);
+  const [execErrorNodeId, setExecErrorNodeId] = useState<string | null>(null);
 
   // Même clé que NodePalette → TanStack retourne le cache immédiatement.
   const { data: nodeTypeInfos } = useQuery({
     queryKey: ["nodeTypes"],
     queryFn: listNodeTypes,
     staleTime: Infinity,
+  });
+
+  const ir = useMemo(() => toIR(JOB_META, nodes, edges), [nodes, edges]);
+  const debouncedIr = useDebounce(ir, 300);
+
+  const { data: validationResult, isPending, isError, error } = useQuery({
+    queryKey: ["validate", JSON.stringify(debouncedIr)],
+    queryFn: () => validateJob(debouncedIr),
+  });
+
+  const mutation = useMutation({
+    mutationFn: runJob,
+    onMutate: () => {
+      setLogEntries((prev) => [...prev, formatRunStart(JOB_META.name, timestamp())]);
+      setExecErrorNodeId(null);
+    },
+    onSuccess: (result) => {
+      setLogEntries((prev) => [...prev, formatRunResult(result, timestamp())]);
+      if (result.kind === "execution_error") setExecErrorNodeId(result.nodeId);
+    },
+    onError: (err: Error) => {
+      setLogEntries((prev) => [
+        ...prev,
+        `[${timestamp()}] ERREUR réseau : ${err.message}`,
+      ]);
+    },
   });
 
   const onConnect = useCallback(
@@ -127,26 +157,18 @@ export default function FlowEditor() {
     [selectedNodeId, setNodes],
   );
 
-  const ir = useMemo(() => toIR(JOB_META, nodes, edges), [nodes, edges]);
-  const debouncedIr = useDebounce(ir, 300);
-
-  const { data: validationResult, isPending, isError, error } = useQuery({
-    queryKey: ["validate", JSON.stringify(debouncedIr)],
-    queryFn: () => validateJob(debouncedIr),
-  });
-
-  const errorNodeId =
+  const validationErrorNodeId =
     validationResult?.kind === "validation_error" ? validationResult.nodeId : null;
 
   const displayNodes: RFNode<EtlNodeData>[] = useMemo(
     () =>
-      nodes.map(
-        (n): RFNode<EtlNodeData> =>
-          n.id === errorNodeId
-            ? { ...n, style: { ...n.style, border: "2px solid red", borderRadius: 6 } }
-            : n,
-      ),
-    [nodes, errorNodeId],
+      nodes.map((n): RFNode<EtlNodeData> => {
+        const isError = n.id === validationErrorNodeId || n.id === execErrorNodeId;
+        return isError
+          ? { ...n, style: { ...n.style, border: "2px solid red", borderRadius: 6 } }
+          : n;
+      }),
+    [nodes, validationErrorNodeId, execErrorNodeId],
   );
 
   const selectedNode = selectedNodeId
@@ -177,58 +199,68 @@ export default function FlowEditor() {
   }
 
   return (
-    <div style={{ width: "100%", height: "100vh", display: "flex" }}>
-      <NodePalette />
-      <div
-        style={{ flex: 1, position: "relative" }}
-        onDragOver={onDragOver}
-        onDrop={onDrop}
-      >
-        <ReactFlow
-          nodes={displayNodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onNodeClick={onNodeClick}
-          onPaneClick={onPaneClick}
-          nodeTypes={nodeTypes}
-          fitView
-        >
-          <Background />
-          <Controls />
-        </ReactFlow>
+    <div style={{ width: "100%", height: "100vh", display: "flex", flexDirection: "column" }}>
+      {/* Zone principale : palette | canvas | params */}
+      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+        <NodePalette />
         <div
-          style={{
-            position: "absolute",
-            bottom: 12,
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: statusColor,
-            border: "1px solid #ccc",
-            borderRadius: 6,
-            padding: "6px 14px",
-            fontSize: 13,
-            maxWidth: 480,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            zIndex: 10,
-            pointerEvents: "none",
-          }}
+          style={{ flex: 1, position: "relative" }}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
         >
-          {statusText}
+          <ReactFlow
+            nodes={displayNodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onNodeClick={onNodeClick}
+            onPaneClick={onPaneClick}
+            nodeTypes={nodeTypes}
+            fitView
+          >
+            <Background />
+            <Controls />
+          </ReactFlow>
+          <div
+            style={{
+              position: "absolute",
+              bottom: 12,
+              left: "50%",
+              transform: "translateX(-50%)",
+              background: statusColor,
+              border: "1px solid #ccc",
+              borderRadius: 6,
+              padding: "6px 14px",
+              fontSize: 13,
+              maxWidth: 480,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              zIndex: 10,
+              pointerEvents: "none",
+            }}
+          >
+            {statusText}
+          </div>
         </div>
+        {selectedNode && (
+          <NodeParamsPanel
+            nodeId={selectedNode.id}
+            nodeType={selectedNode.data.nodeType}
+            params={selectedNode.data.params}
+            schema={selectedNodeTypeInfo?.paramsSchema ?? {}}
+            onParamChange={onParamChange}
+          />
+        )}
       </div>
-      {selectedNode && (
-        <NodeParamsPanel
-          nodeId={selectedNode.id}
-          nodeType={selectedNode.data.nodeType}
-          params={selectedNode.data.params}
-          schema={selectedNodeTypeInfo?.paramsSchema ?? {}}
-          onParamChange={onParamChange}
-        />
-      )}
+      {/* Console d'exécution pleine largeur */}
+      <RunConsole
+        entries={logEntries}
+        onRun={() => mutation.mutate(ir)}
+        canRun={validationResult?.kind === "ok"}
+        isRunning={mutation.isPending}
+      />
     </div>
   );
 }
