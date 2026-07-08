@@ -5,7 +5,7 @@ L'exécution effective est déclenchée par le sink en aval (lazy evaluation).
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 import polars as pl
 from pydantic import BaseModel
@@ -17,6 +17,7 @@ from app.nodes.registry import register
 class CsvSourceParams(BaseModel):
     path: str
     has_header: bool = True
+    separator: Literal[",", ";"] = ","
 
 
 @register(
@@ -26,4 +27,8 @@ class CsvSourceParams(BaseModel):
 )
 class CsvSource:
     def run(self, params: CsvSourceParams, inputs: list[Any]) -> pl.LazyFrame:
-        return pl.scan_csv(params.path, has_header=params.has_header)
+        return pl.scan_csv(
+            params.path,
+            has_header=params.has_header,
+            separator=params.separator,
+        )
