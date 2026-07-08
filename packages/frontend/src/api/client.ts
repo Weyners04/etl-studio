@@ -48,13 +48,55 @@ export async function validateJob(graph: IRGraph): Promise<ValidationResult> {
   throw new Error(`Erreur serveur : ${res.status}`);
 }
 
-export async function runJob(graph: IRGraph): Promise<unknown> {
+export type RunResult =
+  | { kind: "ok"; outputs: { nodeId: string; written: string }[] }
+  | { kind: "validation_error"; message: string; nodeId: string | null; nodeType: string | null }
+  | { kind: "execution_error"; message: string; nodeId: string | null; nodeType: string | null; category: string };
+
+export async function runJob(graph: IRGraph): Promise<RunResult> {
   const res = await fetch(`${BASE}/jobs/run`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(graph),
   });
-  return res.json();
+  if (res.ok) {
+    const body = (await res.json()) as {
+      status: string;
+      outputs: { node_id: string; written: string }[];
+    };
+    return {
+      kind: "ok",
+      outputs: body.outputs.map((o) => ({ nodeId: o.node_id, written: o.written })),
+    };
+  }
+  if (res.status === 422) {
+    const body = (await res.json()) as {
+      detail: {
+        error_type: string;
+        message: string;
+        node_id: string | null;
+        node_type: string | null;
+        category?: string;
+      };
+    };
+    const d = body.detail;
+    if (d.error_type === "execution_error") {
+      return {
+        kind: "execution_error",
+        message: d.message,
+        nodeId: d.node_id,
+        nodeType: d.node_type,
+        category: d.category ?? "unknown",
+      };
+    }
+    return {
+      kind: "validation_error",
+      message: d.message,
+      nodeId: d.node_id,
+      nodeType: d.node_type,
+    };
+  }
+  throw new Error(`Erreur serveur : ${res.status}`);
 }
 
 /** Génération IA — Phase 2. */
