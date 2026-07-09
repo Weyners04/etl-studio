@@ -10,6 +10,8 @@ export type ValidationResult =
 export interface NodeTypeInfo {
   type: string;
   category: string;
+  label: string;
+  description: string;
   paramsSchema: Record<string, unknown>;
 }
 
@@ -18,11 +20,15 @@ export async function listNodeTypes(): Promise<NodeTypeInfo[]> {
   const raw = (await res.json()) as {
     type: string;
     category: string;
+    label: string;
+    description: string;
     params_schema: Record<string, unknown>;
   }[];
   return raw.map((n) => ({
     type: n.type,
     category: n.category,
+    label: n.label,
+    description: n.description,
     paramsSchema: n.params_schema,
   }));
 }
