@@ -30,19 +30,24 @@ class GeneratePayload(BaseModel):
 class NodeInfo(BaseModel):
     type: str
     category: str
+    label: str
+    description: str
     params_schema: dict[str, Any]
 
 
 @router.get("/nodes")
 def list_nodes() -> list[NodeInfo]:
-    """Types de nœuds connus avec leur catégorie et le schéma JSON de leurs params."""
+    """Types de nœuds connus avec leur catégorie, métadonnées d'affichage et schéma params."""
     return [
         NodeInfo(
             type=node_type,
             category=node_type.split(".")[0],
-            params_schema=get_node_descriptor(node_type).params_model.model_json_schema(),
+            label=desc.label,
+            description=desc.description,
+            params_schema=desc.params_model.model_json_schema(),
         )
         for node_type in registered_types()
+        for desc in [get_node_descriptor(node_type)]
     ]
 
 

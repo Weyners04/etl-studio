@@ -36,8 +36,10 @@ class PortCardinality:
 
 @dataclass(frozen=True)
 class NodeDescriptor:
-    """Entrée du registre : regroupe impl, modèle de params et cardinalité."""
+    """Entrée du registre : regroupe impl, modèle de params, cardinalité et métadonnées d'affichage."""
 
     impl: NodeImpl
     params_model: type[BaseModel]
     ports: PortCardinality
+    label: str
+    description: str

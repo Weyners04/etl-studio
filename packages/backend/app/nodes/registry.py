@@ -20,12 +20,16 @@ def register(
     *,
     params_model: type[BaseModel],
     ports: PortCardinality,
+    label: str,
+    description: str,
 ) -> Callable[[type], type]:
     def deco(cls: type) -> type:
         _REGISTRY[node_type] = NodeDescriptor(
             impl=cls(),  # instance unique partagée
             params_model=params_model,
             ports=ports,
+            label=label,
+            description=description,
         )
         return cls
 

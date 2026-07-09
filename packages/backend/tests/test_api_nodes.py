@@ -56,3 +56,23 @@ def test_sink_parquet_category():
     nodes = response.json()
     sink_node = next(n for n in nodes if n["type"] == "sink.parquet")
     assert sink_node["category"] == "sink"
+
+
+def test_all_nodes_have_non_empty_label_and_description():
+    """Chaque type de nœud expose un label et une description non vides."""
+    response = client.get("/nodes")
+    nodes = response.json()
+    for node in nodes:
+        assert node["label"], f"{node['type']} : label manquant ou vide"
+        assert node["description"], f"{node['type']} : description manquante ou vide"
+
+
+def test_node_labels_match_spec():
+    """Les libellés correspondent exactement aux valeurs définies dans les nœuds."""
+    response = client.get("/nodes")
+    nodes = response.json()
+    by_type = {n["type"]: n for n in nodes}
+    assert by_type["source.csv"]["label"] == "CSVReader"
+    assert by_type["transform.filter"]["label"] == "FilterRow"
+    assert by_type["transform.select"]["label"] == "ColumnFilter"
+    assert by_type["sink.parquet"]["label"] == "ParquetWriter"

@@ -19,6 +19,8 @@ class SelectTransformParams(BaseModel):
     "transform.select",
     params_model=SelectTransformParams,
     ports=PortCardinality(min_in=1, max_in=None, min_out=0, max_out=None),
+    label="ColumnFilter",
+    description="Ne conserve que les colonnes sélectionnées, dans l'ordre choisi.",
 )
 class SelectTransform:
     def run(self, params: SelectTransformParams, inputs: list[Any]) -> pl.LazyFrame:

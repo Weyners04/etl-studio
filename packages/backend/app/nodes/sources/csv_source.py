@@ -24,6 +24,8 @@ class CsvSourceParams(BaseModel):
     "source.csv",
     params_model=CsvSourceParams,
     ports=PortCardinality(min_in=0, max_in=0, min_out=0, max_out=None),
+    label="CSVReader",
+    description="Lit un fichier CSV et charge ses lignes dans le pipeline.",
 )
 class CsvSource:
     def run(self, params: CsvSourceParams, inputs: list[Any]) -> pl.LazyFrame:

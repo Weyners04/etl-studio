@@ -25,6 +25,8 @@ class ParquetSinkParams(BaseModel):
     "sink.parquet",
     params_model=ParquetSinkParams,
     ports=PortCardinality(min_in=1, max_in=None, min_out=0, max_out=0),
+    label="ParquetWriter",
+    description="Écrit les données dans un fichier Parquet.",
 )
 class ParquetSink:
     def run(self, params: ParquetSinkParams, inputs: list[Any]) -> dict[str, Any]:
