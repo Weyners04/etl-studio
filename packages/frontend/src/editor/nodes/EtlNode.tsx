@@ -1,9 +1,21 @@
+import { useQuery } from "@tanstack/react-query";
 import { Handle, Position, type NodeProps } from "reactflow";
+import { listNodeTypes } from "@/api/client";
 import type { EtlNodeData } from "@/ir/serialize";
 import { accentColor } from "./nodeColors";
 
 export default function EtlNode({ data }: NodeProps<EtlNodeData>) {
   const color = accentColor(data.nodeType);
+
+  const { data: nodeTypes } = useQuery({
+    queryKey: ["nodeTypes"],
+    queryFn: listNodeTypes,
+    staleTime: Infinity,
+  });
+
+  const label =
+    nodeTypes?.find((t) => t.type === data.nodeType)?.label ?? data.nodeType;
+
   return (
     <>
       <Handle type="target" position={Position.Left} />
@@ -21,7 +33,7 @@ export default function EtlNode({ data }: NodeProps<EtlNodeData>) {
           userSelect: "none",
         }}
       >
-        {data.nodeType}
+        {label}
       </div>
       <Handle type="source" position={Position.Right} />
     </>
