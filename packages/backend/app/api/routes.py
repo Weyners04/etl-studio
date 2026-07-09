@@ -45,7 +45,12 @@ def validate_job(graph: IRGraph) -> dict[str, str]:
     except ValidationError as exc:
         raise HTTPException(
             status_code=422,
-            detail={"message": str(exc), "node_id": exc.node_id, "node_type": exc.node_type},
+            detail={
+                "error_type": "validation_error",
+                "message": str(exc),
+                "node_id": exc.node_id,
+                "node_type": exc.node_type,
+            },
         ) from exc
     return {"status": "ok"}
 
