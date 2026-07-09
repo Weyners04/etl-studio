@@ -9,7 +9,15 @@ from pydantic import BaseModel
 
 from app.ai import generate_ir
 from app.ir import IRGraph
-from app.interpreter import ExecutionError, ValidationError, build_plan, execute, validate
+from app.interpreter import (
+    DebugExecutionError,
+    ExecutionError,
+    ValidationError,
+    build_plan,
+    execute,
+    execute_debug,
+    validate,
+)
 from app.nodes.registry import get_node_descriptor, registered_types
 
 router = APIRouter()
@@ -89,6 +97,47 @@ def run_job(graph: IRGraph) -> dict[str, object]:
         if isinstance(value, dict)
     ]
     return {"status": "ok", "outputs": sink_outputs}
+
+
+@router.post("/jobs/debug")
+def debug_job(graph: IRGraph) -> dict[str, object]:
+    try:
+        validate(graph)
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error_type": "validation_error",
+                "message": str(exc),
+                "node_id": exc.node_id,
+                "node_type": exc.node_type,
+            },
+        ) from exc
+    plan = build_plan(graph)
+    try:
+        results = execute_debug(plan)
+    except DebugExecutionError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error_type": "execution_error",
+                "message": str(exc.cause),
+                "node_id": exc.cause.node_id,
+                "node_type": exc.cause.node_type,
+                "category": exc.cause.category.value,
+                "partial_nodes": [
+                    {"node_id": r.node_id, "row_count": r.row_count, "sample": r.sample}
+                    for r in exc.partial
+                ],
+            },
+        ) from exc
+    nodes_out = [
+        {"node_id": r.node_id, "row_count": r.row_count, "sample": r.sample} for r in results
+    ]
+    sink_outputs = [
+        {"node_id": r.node_id, "written": r.written} for r in results if r.written is not None
+    ]
+    return {"status": "ok", "nodes": nodes_out, "outputs": sink_outputs}
 
 
 @router.post("/ai/generate")
