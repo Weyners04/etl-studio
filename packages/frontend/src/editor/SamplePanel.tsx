@@ -10,6 +10,7 @@ export default function SamplePanel({ rowCount, sample, onClose }: Props) {
 
   return (
     <div
+      onClick={(e) => e.stopPropagation()}
       style={{
         position: "absolute",
         top: 10,

@@ -180,6 +180,7 @@ export default function FlowEditor() {
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: RFNode<EtlNodeData>) => {
       setSelectedNodeId(node.id);
+      setSelectedEdgeId(null);
     },
     [],
   );
