@@ -92,12 +92,6 @@ export default function FlowEditor() {
   const ir = useMemo(() => toIR(JOB_META, nodes, edges), [nodes, edges]);
   const debouncedIr = useDebounce(ir, 300);
 
-  // Efface les résultats debug dès que le graphe change.
-  useEffect(() => {
-    setDebugResults([]);
-    setSelectedEdgeId(null);
-  }, [ir]);
-
   const { data: validationResult, isPending, isError, error } = useQuery({
     queryKey: ["validate", JSON.stringify(debouncedIr)],
     queryFn: () => validateJob(debouncedIr),
@@ -108,6 +102,8 @@ export default function FlowEditor() {
     onMutate: () => {
       setLogEntries([formatRunStart(JOB_META.name, timestamp())]);
       setExecErrorNodeId(null);
+      setDebugResults([]);
+      setSelectedEdgeId(null);
     },
     onSuccess: (result) => {
       setLogEntries((prev) => [...prev, formatRunResult(result, timestamp())]);
