@@ -42,12 +42,15 @@ function useDebounce<T>(value: T, delay: number): T {
 
 const JOB_META = { id: "job-1", name: "Exemple" };
 
+const DEFAULT_INPUT = import.meta.env.VITE_DEFAULT_INPUT ?? "data/input.csv";
+const DEFAULT_OUTPUT = import.meta.env.VITE_DEFAULT_OUTPUT ?? "data/output.parquet";
+
 const INITIAL_NODES: RFNode<EtlNodeData>[] = [
   {
     id: "n1",
     type: "etlNode",
     position: { x: 100, y: 200 },
-    data: { nodeType: "source.csv", params: { path: "data/input.csv" } },
+    data: { nodeType: "source.csv", params: { path: DEFAULT_INPUT } },
   },
   {
     id: "n2",
@@ -62,7 +65,7 @@ const INITIAL_NODES: RFNode<EtlNodeData>[] = [
     id: "n3",
     type: "etlNode",
     position: { x: 660, y: 200 },
-    data: { nodeType: "sink.parquet", params: { path: "data/output.parquet" } },
+    data: { nodeType: "sink.parquet", params: { path: DEFAULT_OUTPUT } },
   },
 ];
 
