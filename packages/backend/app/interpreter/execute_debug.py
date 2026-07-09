@@ -6,6 +6,8 @@ lignes et un échantillon. Le mode normal (execute) reste strictement inchangé.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Any
@@ -75,32 +77,12 @@ def execute_debug(plan: ExecutionPlan) -> list[NodeDebugResult]:
         node_id = step.node.id
         node_type = step.node.type
 
-        try:
+        with _node_guard(node_id, node_type, results):
             raw = desc.impl.run(params=parsed_params, inputs=inputs)
-        except (OSError, pl_exc.PolarsError) as exc:
-            raise DebugExecutionError(
-                ExecutionError(
-                    f"Nœud {node_id!r} ({node_type}) : {_translate(exc)}",
-                    category=_categorize(exc),
-                    node_id=node_id,
-                    node_type=node_type,
-                ),
-                partial=results,
-            ) from exc
 
         if isinstance(raw, pl.LazyFrame):
-            try:
+            with _node_guard(node_id, node_type, results):
                 df = raw.collect()
-            except (OSError, pl_exc.PolarsError) as exc:
-                raise DebugExecutionError(
-                    ExecutionError(
-                        f"Nœud {node_id!r} ({node_type}) : {_translate(exc)}",
-                        category=_categorize(exc),
-                        node_id=node_id,
-                        node_type=node_type,
-                    ),
-                    partial=results,
-                ) from exc
             results.append(
                 NodeDebugResult(
                     node_id=node_id,
@@ -123,6 +105,27 @@ def execute_debug(plan: ExecutionPlan) -> list[NodeDebugResult]:
             outputs[node_id] = raw
 
     return results
+
+
+@contextmanager
+def _node_guard(
+    node_id: str,
+    node_type: str,
+    partial: list[NodeDebugResult],
+) -> Iterator[None]:
+    """Attrape OSError/PolarsError et les relève en DebugExecutionError attribuée au nœud."""
+    try:
+        yield
+    except (OSError, pl_exc.PolarsError) as exc:
+        raise DebugExecutionError(
+            ExecutionError(
+                f"Nœud {node_id!r} ({node_type}) : {_translate(exc)}",
+                category=_categorize(exc),
+                node_id=node_id,
+                node_type=node_type,
+            ),
+            partial=partial,
+        ) from exc
 
 
 def _safe_sample(df: pl.DataFrame, n: int) -> list[dict[str, object]]:
