@@ -3,18 +3,29 @@ import { useEffect, useRef } from "react";
 interface Props {
   entries: string[];
   onRun: () => void;
+  onDebug: () => void;
   canRun: boolean;
   isRunning: boolean;
+  isDebugging: boolean;
 }
 
-export default function RunConsole({ entries, onRun, canRun, isRunning }: Props) {
+export default function RunConsole({
+  entries,
+  onRun,
+  onDebug,
+  canRun,
+  isRunning,
+  isDebugging,
+}: Props) {
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [entries]);
 
-  const btnActive = canRun && !isRunning;
+  const isBusy = isRunning || isDebugging;
+  const runActive = canRun && !isBusy;
+  const debugActive = canRun && !isBusy;
 
   return (
     <div
@@ -38,20 +49,37 @@ export default function RunConsole({ entries, onRun, canRun, isRunning }: Props)
       >
         <button
           onClick={onRun}
-          disabled={!btnActive}
+          disabled={!runActive}
           style={{
-            background: btnActive ? "#22c55e" : "#334155",
-            color: btnActive ? "#fff" : "#94a3b8",
+            background: runActive ? "#22c55e" : "#334155",
+            color: runActive ? "#fff" : "#94a3b8",
             border: "none",
             borderRadius: 4,
             padding: "4px 14px",
             fontSize: 12,
             fontWeight: 600,
-            cursor: btnActive ? "pointer" : "not-allowed",
+            cursor: runActive ? "pointer" : "not-allowed",
             transition: "background 0.15s",
           }}
         >
           {isRunning ? "Exécution…" : "Exécuter"}
+        </button>
+        <button
+          onClick={onDebug}
+          disabled={!debugActive}
+          style={{
+            background: debugActive ? "#3b82f6" : "#334155",
+            color: debugActive ? "#fff" : "#94a3b8",
+            border: "none",
+            borderRadius: 4,
+            padding: "4px 14px",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: debugActive ? "pointer" : "not-allowed",
+            transition: "background 0.15s",
+          }}
+        >
+          {isDebugging ? "Debug…" : "Debug"}
         </button>
         <span
           style={{

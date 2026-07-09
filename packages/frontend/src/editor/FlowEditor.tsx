@@ -14,12 +14,20 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { toIR, type EtlNodeData } from "@/ir/serialize";
-import { runJob, validateJob, listNodeTypes } from "@/api/client";
+import { debugJob, runJob, validateJob, listNodeTypes, type DebugNodeResult } from "@/api/client";
 import EtlNode from "@/editor/nodes/EtlNode";
 import NodePalette from "@/editor/NodePalette";
 import NodeParamsPanel from "@/editor/NodeParamsPanel";
 import RunConsole from "@/editor/RunConsole";
-import { formatRunResult, formatRunStart, timestamp } from "@/editor/runLog";
+import SamplePanel from "@/editor/SamplePanel";
+import { buildEdgeCounts } from "@/editor/debugCounts";
+import {
+  formatDebugResult,
+  formatDebugStart,
+  formatRunResult,
+  formatRunStart,
+  timestamp,
+} from "@/editor/runLog";
 
 const nodeTypes = { etlNode: EtlNode };
 
@@ -71,6 +79,8 @@ export default function FlowEditor() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [logEntries, setLogEntries] = useState<string[]>([]);
   const [execErrorNodeId, setExecErrorNodeId] = useState<string | null>(null);
+  const [debugResults, setDebugResults] = useState<DebugNodeResult[]>([]);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
 
   // Même clé que NodePalette → TanStack retourne le cache immédiatement.
   const { data: nodeTypeInfos } = useQuery({
@@ -81,6 +91,12 @@ export default function FlowEditor() {
 
   const ir = useMemo(() => toIR(JOB_META, nodes, edges), [nodes, edges]);
   const debouncedIr = useDebounce(ir, 300);
+
+  // Efface les résultats debug dès que le graphe change.
+  useEffect(() => {
+    setDebugResults([]);
+    setSelectedEdgeId(null);
+  }, [ir]);
 
   const { data: validationResult, isPending, isError, error } = useQuery({
     queryKey: ["validate", JSON.stringify(debouncedIr)],
@@ -104,6 +120,36 @@ export default function FlowEditor() {
       ]);
     },
   });
+
+  const debugMutation = useMutation({
+    mutationFn: debugJob,
+    onMutate: () => {
+      setLogEntries([formatDebugStart(JOB_META.name, timestamp())]);
+      setExecErrorNodeId(null);
+      setDebugResults([]);
+      setSelectedEdgeId(null);
+    },
+    onSuccess: (result) => {
+      setLogEntries((prev) => [...prev, formatDebugResult(result, timestamp())]);
+      if (result.kind === "ok") {
+        setDebugResults(result.nodes);
+      } else if (result.kind === "execution_error") {
+        setExecErrorNodeId(result.nodeId);
+        setDebugResults(result.partialNodes);
+      }
+    },
+    onError: (err: Error) => {
+      setLogEntries((prev) => [
+        ...prev,
+        `[${timestamp()}] ERREUR réseau : ${err.message}`,
+      ]);
+    },
+  });
+
+  const edgeCounts = useMemo(
+    () => buildEdgeCounts(debugResults, edges),
+    [debugResults, edges],
+  );
 
   const onConnect = useCallback(
     (c: Connection) => setEdges((eds) => addEdge(c, eds)),
@@ -141,6 +187,11 @@ export default function FlowEditor() {
 
   const onPaneClick = useCallback((_event: React.MouseEvent) => {
     setSelectedNodeId(null);
+    setSelectedEdgeId(null);
+  }, []);
+
+  const onEdgeClick = useCallback((_event: React.MouseEvent, edge: RFEdge) => {
+    setSelectedEdgeId(edge.id);
   }, []);
 
   const onParamChange = useCallback(
@@ -173,12 +224,27 @@ export default function FlowEditor() {
     [nodes, validationErrorNodeId, execErrorNodeId],
   );
 
+  const displayEdges: RFEdge[] = useMemo(
+    () =>
+      edges.map((e) => {
+        const count = edgeCounts.get(e.id);
+        return count !== undefined ? { ...e, label: `${count} lignes` } : e;
+      }),
+    [edges, edgeCounts],
+  );
+
   const selectedNode = selectedNodeId
     ? (nodes.find((n) => n.id === selectedNodeId) ?? null)
     : null;
 
   const selectedNodeTypeInfo = selectedNode
     ? (nodeTypeInfos?.find((info) => info.type === selectedNode.data.nodeType) ?? null)
+    : null;
+
+  // Données de l'échantillon pour l'arête sélectionnée (nœud source).
+  const selectedEdge = selectedEdgeId ? (edges.find((e) => e.id === selectedEdgeId) ?? null) : null;
+  const sampleNode = selectedEdge
+    ? (debugResults.find((r) => r.nodeId === selectedEdge.source) ?? null)
     : null;
 
   let statusText: string;
@@ -212,11 +278,12 @@ export default function FlowEditor() {
         >
           <ReactFlow
             nodes={displayNodes}
-            edges={edges}
+            edges={displayEdges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeClick={onNodeClick}
+            onEdgeClick={onEdgeClick}
             onPaneClick={onPaneClick}
             nodeTypes={nodeTypes}
             fitView
@@ -245,6 +312,13 @@ export default function FlowEditor() {
           >
             {statusText}
           </div>
+          {sampleNode && (
+            <SamplePanel
+              rowCount={sampleNode.rowCount}
+              sample={sampleNode.sample}
+              onClose={() => setSelectedEdgeId(null)}
+            />
+          )}
         </div>
         {selectedNode && (
           <NodeParamsPanel
@@ -260,8 +334,10 @@ export default function FlowEditor() {
       <RunConsole
         entries={logEntries}
         onRun={() => mutation.mutate(ir)}
+        onDebug={() => debugMutation.mutate(ir)}
         canRun={validationResult?.kind === "ok"}
         isRunning={mutation.isPending}
+        isDebugging={debugMutation.isPending}
       />
     </div>
   );
