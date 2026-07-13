@@ -17,9 +17,11 @@ def test_nodes_returns_list():
     assert isinstance(data, list)
     types = [n["type"] for n in data]
     assert "source.csv" in types
+    assert "source.parquet" in types
     assert "transform.filter" in types
     assert "transform.select" in types
     assert "sink.parquet" in types
+    assert "sink.csv" in types
 
 
 def test_transform_filter_schema_has_operator_enum():
@@ -73,6 +75,32 @@ def test_node_labels_match_spec():
     nodes = response.json()
     by_type = {n["type"]: n for n in nodes}
     assert by_type["source.csv"]["label"] == "CSVReader"
+    assert by_type["source.parquet"]["label"] == "ParquetReader"
     assert by_type["transform.filter"]["label"] == "RowFilter"
     assert by_type["transform.select"]["label"] == "ColumnFilter"
     assert by_type["sink.parquet"]["label"] == "ParquetWriter"
+    assert by_type["sink.csv"]["label"] == "CSVWriter"
+
+
+def test_source_parquet_exposed_by_nodes_route():
+    """source.parquet a category='source', un label, une description et path dans son schéma."""
+    response = client.get("/nodes")
+    nodes = response.json()
+    node = next(n for n in nodes if n["type"] == "source.parquet")
+    assert node["category"] == "source"
+    assert node["label"] == "ParquetReader"
+    assert node["description"]
+    assert "path" in node["params_schema"]["properties"]
+
+
+def test_sink_csv_exposed_by_nodes_route():
+    """sink.csv a category='sink', un label, une description et l'enum separator."""
+    response = client.get("/nodes")
+    nodes = response.json()
+    node = next(n for n in nodes if n["type"] == "sink.csv")
+    assert node["category"] == "sink"
+    assert node["label"] == "CSVWriter"
+    assert node["description"]
+    sep_schema = node["params_schema"]["properties"]["separator"]
+    assert sep_schema["enum"] == [",", ";"]
+    assert sep_schema["default"] == ","
