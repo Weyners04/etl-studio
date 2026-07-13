@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 from pydantic import BaseModel
+
+from app.schema_types import NodeSchemaResolver, _passthrough_resolver
 
 
 class NodeImpl(Protocol):
@@ -43,3 +45,4 @@ class NodeDescriptor:
     ports: PortCardinality
     label: str
     description: str
+    schema_resolver: NodeSchemaResolver = field(default=_passthrough_resolver)

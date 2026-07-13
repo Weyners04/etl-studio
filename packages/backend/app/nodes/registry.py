@@ -10,6 +10,7 @@ from typing import Callable
 
 from pydantic import BaseModel
 
+from app.schema_types import NodeSchemaResolver, _passthrough_resolver
 from app.nodes.base import NodeDescriptor, NodeImpl, PortCardinality
 
 _REGISTRY: dict[str, NodeDescriptor] = {}
@@ -22,6 +23,7 @@ def register(
     ports: PortCardinality,
     label: str,
     description: str,
+    schema_resolver: NodeSchemaResolver = _passthrough_resolver,
 ) -> Callable[[type], type]:
     def deco(cls: type) -> type:
         _REGISTRY[node_type] = NodeDescriptor(
@@ -30,6 +32,7 @@ def register(
             ports=ports,
             label=label,
             description=description,
+            schema_resolver=schema_resolver,
         )
         return cls
 
