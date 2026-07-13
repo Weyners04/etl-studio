@@ -16,6 +16,7 @@ from app.interpreter import (
     build_plan,
     execute,
     execute_debug,
+    resolve_schemas,
     validate,
 )
 from app.nodes.registry import get_node_descriptor, registered_types
@@ -143,6 +144,30 @@ def debug_job(graph: IRGraph) -> dict[str, object]:
         {"node_id": r.node_id, "written": r.written} for r in results if r.written is not None
     ]
     return {"status": "ok", "nodes": nodes_out, "outputs": sink_outputs}
+
+
+@router.post("/jobs/schema")
+def schema_job(graph: IRGraph) -> dict[str, object]:
+    """Résout et propage les schémas de colonnes sans exécuter le job.
+
+    Sources inaccessibles → schéma indéterminé (columns: null) propagé en aval.
+    Ne lève jamais d'erreur pour cause de fichier manquant.
+    """
+    plan = build_plan(graph)
+    results = resolve_schemas(plan)
+    nodes_out: dict[str, object] = {}
+    for node_id, resolution in results.items():
+        entry: dict[str, object] = {
+            "columns": (
+                [{"name": c.name, "dtype": c.dtype} for c in resolution.schema]
+                if resolution.schema is not None
+                else None
+            )
+        }
+        if resolution.warnings:
+            entry["warnings"] = resolution.warnings
+        nodes_out[node_id] = entry
+    return {"status": "ok", "nodes": nodes_out}
 
 
 @router.post("/ai/generate")
