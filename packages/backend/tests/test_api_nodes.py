@@ -73,6 +73,6 @@ def test_node_labels_match_spec():
     nodes = response.json()
     by_type = {n["type"]: n for n in nodes}
     assert by_type["source.csv"]["label"] == "CSVReader"
-    assert by_type["transform.filter"]["label"] == "FilterRow"
+    assert by_type["transform.filter"]["label"] == "RowFilter"
     assert by_type["transform.select"]["label"] == "ColumnFilter"
     assert by_type["sink.parquet"]["label"] == "ParquetWriter"

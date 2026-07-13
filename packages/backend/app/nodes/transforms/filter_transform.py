@@ -36,7 +36,7 @@ class FilterTransformParams(BaseModel):
     "transform.filter",
     params_model=FilterTransformParams,
     ports=PortCardinality(min_in=1, max_in=None, min_out=0, max_out=None),
-    label="FilterRow",
+    label="RowFilter",
     description="Filtre les lignes selon une condition sur une colonne.",
 )
 class FilterTransform:
