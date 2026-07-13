@@ -1,1 +1,1 @@
-from app.nodes.sinks import parquet_sink  # noqa: F401
+from app.nodes.sinks import csv_sink, parquet_sink  # noqa: F401
